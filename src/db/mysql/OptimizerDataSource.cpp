@@ -32,15 +32,18 @@ using namespace fts3::optimizer;
 
 // Set the new number of actives
 static void setNewOptimizerValue(soci::session &sql,
-    const Pair &pair, int optimizerDecision, double ema)
+    const QueueId &queue, int optimizerDecision, double ema)
 {
     sql.begin();
     sql <<
-        "INSERT INTO t_optimizer (source_se, dest_se, active, ema, datetime) "
-        "VALUES (:source, :dest, :active, :ema, UTC_TIMESTAMP()) "
+        "INSERT INTO t_optimizer (source_se, dest_se, vo_name, activity, active, ema, datetime) "
+        "VALUES (:source, :dest, :vo, :activity, :active, :ema, UTC_TIMESTAMP()) "
         "ON DUPLICATE KEY UPDATE "
         "   active = :active, ema = :ema, datetime = UTC_TIMESTAMP()",
-        soci::use(pair.source, "source"), soci::use(pair.destination, "dest"),
+        soci::use(queue.sourceSe, "source"), 
+        soci::use(queue.destSe, "dest"),
+        soci::use(queue.voName, "vo"),
+        soci::use(queue.activity, "activity"),
         soci::use(optimizerDecision, "active"), soci::use(ema, "ema");
     sql.commit();
 }
@@ -48,7 +51,7 @@ static void setNewOptimizerValue(soci::session &sql,
 // Insert the optimizer decision into the historical table, so we can follow
 // the progress
 static void updateOptimizerEvolution(soci::session &sql,
-    const Pair &pair, int active, int diff, const std::string &rationale, const PairState &newState)
+    const QueueId &queue, int active, int diff, const std::string &rationale, const PairState &newState)
 {
     try {
         sql.begin();
@@ -64,7 +67,7 @@ static void updateOptimizerEvolution(soci::session &sql,
             "  :filesize_avg, :filesize_stddev, "
             "  :actual_active, :queue_size, "
             "  :rationale, :diff)",
-            soci::use(pair.source), soci::use(pair.destination),
+            soci::use(queue.sourceSe), soci::use(queue.destSe),
             soci::use(newState.ema), soci::use(active), soci::use(newState.throughput), soci::use(newState.successRate),
             soci::use(newState.filesizeAvg), soci::use(newState.filesizeStdDev),
             soci::use(newState.activeCount), soci::use(newState.queueSize),
@@ -82,15 +85,15 @@ static void updateOptimizerEvolution(soci::session &sql,
 }
 
 
-// Count how many files are in the given state for the given pair
+// Count how many files are in the given state for the given queue
 // Only non terminal!
-static int getCountInState(soci::session &sql, const Pair &pair, const std::string &state)
+static int getCountInState(soci::session &sql, const QueueId &queue, const std::string &state)
 {
     int count = 0;
 
     sql << "SELECT count(*) FROM t_file "
     "WHERE source_se = :source AND dest_se = :dest_se AND file_state = :state",
-    soci::use(pair.source), soci::use(pair.destination), soci::use(state), soci::into(count);
+    soci::use(queue.sourceSe), soci::use(queue.destSe), soci::use(state), soci::into(count);
 
     return count;
 }
@@ -108,8 +111,8 @@ public:
     ~MySqlOptimizerDataSource() {
     }
 
-    std::list<Pair> getActivePairs(void) {
-        std::list<Pair> result;
+    std::list<QueueId> getActivePairs(void) {
+        std::list<QueueId> result;
 
         soci::rowset<soci::row> rs = (sql.prepare <<
             "SELECT DISTINCT source_se, dest_se, vo_name "
@@ -120,19 +123,20 @@ public:
         );
 
         for (auto i = rs.begin(); i != rs.end(); ++i) {
-            result.push_back(Pair(i->get<std::string>("source_se"), i->get<std::string>("dest_se"),
+            result.push_back(QueueId(i->get<std::string>("source_se"), i->get<std::string>("dest_se"),
                                   i->get<std::string>("vo_name")));
         }
 
         return result;
     }
 
+    
 
     OptimizerMode getOptimizerMode(const std::string &source, const std::string &dest) {
         return getOptimizerModeInner(sql, source, dest);
     }
 
-    void getPairLimits(const Pair &pair, Range *range, StorageLimits *limits) {
+    void getPairLimits(const QueueId &queue, Range *range, StorageLimits *limits) {
         soci::indicator nullIndicator;
 
         limits->source = limits->destination = 0;
@@ -145,7 +149,7 @@ public:
             "   SELECT outbound_max_throughput, outbound_max_active FROM t_se WHERE storage = :source UNION "
             "   SELECT outbound_max_throughput, outbound_max_active FROM t_se WHERE storage = '*' "
             ") AS se LIMIT 1",
-            soci::use(pair.source),
+            soci::use(queue.sourceSe),
             soci::into(limits->throughputSource, nullIndicator), soci::into(limits->source, nullIndicator);
 
         sql <<
@@ -153,7 +157,7 @@ public:
             "   SELECT inbound_max_throughput, inbound_max_active FROM t_se WHERE storage = :dest UNION "
             "   SELECT inbound_max_throughput, inbound_max_active FROM t_se WHERE storage = '*' "
             ") AS se LIMIT 1",
-        soci::use(pair.destination),
+        soci::use(queue.destSe),
         soci::into(limits->throughputDestination, nullIndicator), soci::into(limits->destination, nullIndicator);
 
         // Link working range
@@ -165,7 +169,7 @@ public:
             "   SELECT 1 AS configured, min_active, max_active FROM t_link_config WHERE source_se = '*' AND dest_se = :dest UNION "
             "   SELECT 0 AS configured, min_active, max_active FROM t_link_config WHERE source_se = '*' AND dest_se = '*' "
             ") AS lc LIMIT 1",
-            soci::use(pair.source, "source"), soci::use(pair.destination, "dest"),
+            soci::use(queue.sourceSe, "source"), soci::use(queue.destSe, "dest"),
             soci::into(range->specific), soci::into(range->min, isNullMin), soci::into(range->max, isNullMax);
 
         if (isNullMin == soci::i_null || isNullMax == soci::i_null) {
@@ -173,13 +177,13 @@ public:
         }
     }
 
-    int getOptimizerValue(const Pair &pair) {
+    int getOptimizerValue(const QueueId &queue) {
         soci::indicator isCurrentNull;
         int currentActive = 0;
 
         sql << "SELECT active FROM t_optimizer "
             "WHERE source_se = :source AND dest_se = :dest_se",
-            soci::use(pair.source),soci::use(pair.destination),
+            soci::use(queue.sourceSe),soci::use(queue.destSe),
             soci::into(currentActive, isCurrentNull);
 
         if (isCurrentNull == soci::i_null) {
@@ -188,7 +192,7 @@ public:
         return currentActive;
     }
 
-    std::string getTcnProject(const Pair &pair) {
+    std::string getTcnProject(const QueueId &queue) {
         std::string pid;
 
         const static std::string tname("t_tcn_projects");
@@ -201,9 +205,9 @@ public:
             " SELECT proj_id FROM t_tcn_projects WHERE vo_name = :vo_name AND source_se = '*' AND dest_se = :dest_se UNION"
             " SELECT proj_id FROM t_tcn_projects WHERE vo_name = :vo_name AND source_se = '*' AND dest_se = '*'"
             " ) AS tpr LIMIT 1",
-            soci::use(pair.vo, "vo_name"),
-            soci::use(pair.source, "source_se"),
-            soci::use(pair.destination, "dest_se"),
+            soci::use(queue.vo, "vo_name"),
+            soci::use(queue.sourceSe, "source_se"),
+            soci::use(queue.destSe, "dest_se"),
             soci::into(pid, isNullProject);
 
         if (isNullProject == soci::i_null) {
@@ -212,15 +216,16 @@ public:
 
         return pid;
     }
-
-    void getTcnPipeResource(const Pair &pair, std::vector<std::string> &usedResources) {
+    
+    
+    void getTcnPipeResource(const QueueId &queue, std::vector<std::string> &usedResources) {
         usedResources.clear();
 
         soci::rowset<soci::row> resources = (sql.prepare <<
             "SELECT resc_id FROM t_tcn_resource_use "
             " WHERE source_se = :source_se AND dest_se = :dest_se",
-            soci::use(pair.source, "source_se"),
-            soci::use(pair.destination, "dest_se"));
+            soci::use(queue.sourceSe, "source_se"),
+            soci::use(queue.destSe, "dest_se"));
 
         for (auto j = resources.begin(); j != resources.end(); ++j) {
             auto rescId = j->get<std::string>("resc_id");
@@ -245,7 +250,7 @@ public:
         }
     }
 
-    int64_t getTransferredInfo(const Pair &pair, time_t windowStart) {
+    int64_t getTransferredInfo(const QueueId &queue, time_t windowStart) {
         static struct tm nulltm = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
         time_t now = time(NULL);
@@ -268,9 +273,9 @@ public:
                     "   AND file_state IN ('FINISHED', 'ARCHIVING') AND "
                     "finish_time >= (UTC_TIMESTAMP() - INTERVAL :interval "
                     "SECOND)",
-             soci::use(pair.source, "sourceSe"),
-             soci::use(pair.destination, "destSe"),
-             soci::use(pair.vo, "voName"),
+             soci::use(queue.sourceSe, "sourceSe"),
+             soci::use(queue.destSe, "destSe"),
+             soci::use(queue.vo, "voName"),
              soci::use(total_seconds, "interval"));
 
         int64_t totalBytes = 0;
@@ -301,7 +306,7 @@ public:
         return totalBytes;
     }
 
-    void getThroughputInfo(const Pair &pair, const boost::posix_time::time_duration &interval,
+    void getThroughputInfo(const QueueId &queue, const boost::posix_time::time_duration &interval,
         double *throughput, double *filesizeAvg, double *filesizeStdDev)
     {
         static struct tm nulltm = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -322,7 +327,7 @@ public:
         " WHERE "
         "   source_se = :sourceSe AND dest_se = :destSe "
         "   AND file_state IN ('FINISHED', 'ARCHIVING') AND finish_time >= (UTC_TIMESTAMP() - INTERVAL :interval SECOND)",
-        soci::use(pair.source, "sourceSe"), soci::use(pair.destination, "destSe"),
+        soci::use(queue.sourceSe, "sourceSe"), soci::use(queue.destSe, "destSe"),
         soci::use(interval.total_seconds(), "interval"));
 
         int64_t totalBytes = 0;
@@ -382,7 +387,7 @@ public:
         }
     }
 
-    time_t getAverageDuration(const Pair &pair, const boost::posix_time::time_duration &interval) {
+    time_t getAverageDuration(const QueueId &queue, const boost::posix_time::time_duration &interval) {
         double avgDuration = 0.0;
         soci::indicator isNullAvg = soci::i_ok;
 
@@ -390,13 +395,13 @@ public:
             " WHERE source_se = :source AND dest_se = :dest AND file_state IN ('FINISHED', 'ARCHIVING') AND "
             "   tx_duration > 0 AND tx_duration IS NOT NULL AND "
             "   finish_time > (UTC_TIMESTAMP() - INTERVAL :interval SECOND) LIMIT 1",
-            soci::use(pair.source), soci::use(pair.destination), soci::use(interval.total_seconds()),
+            soci::use(queue.sourceSe), soci::use(queue.destSe), soci::use(interval.total_seconds()),
             soci::into(avgDuration, isNullAvg);
 
         return avgDuration;
     }
 
-    double getSuccessRateForPair(const Pair &pair, const boost::posix_time::time_duration &interval,
+    double getSuccessRateForPair(const QueueId &queue, const boost::posix_time::time_duration &interval,
         int *retryCount) {
         soci::rowset<soci::row> rs = (sql.prepare <<
             "SELECT file_state, retry, current_failures AS recoverable FROM t_file USE INDEX(idx_finish_time)"
@@ -404,7 +409,7 @@ public:
             "      source_se = :source AND dest_se = :dst AND "
             "      finish_time > (UTC_TIMESTAMP() - interval :calculateTimeFrame SECOND) AND "
             "file_state <> 'NOT_USED' ",
-            soci::use(pair.source), soci::use(pair.destination), soci::use(interval.total_seconds())
+            soci::use(queue.sourceSe), soci::use(queue.destSe), soci::use(interval.total_seconds())
         );
 
         int nFailedLastHour = 0;
@@ -445,12 +450,12 @@ public:
         }
     }
 
-    int getActive(const Pair &pair) {
-        return getCountInState(sql, pair, "ACTIVE");
+    int getActive(const QueueId &queue) {
+        return getCountInState(sql, queue, "ACTIVE");
     }
 
-    int getSubmitted(const Pair &pair) {
-        return getCountInState(sql, pair, "SUBMITTED");
+    int getSubmitted(const QueueId &queue) {
+        return getCountInState(sql, queue, "SUBMITTED");
     }
 
     double getThroughputAsSource(const std::string &se) {
@@ -476,20 +481,20 @@ public:
         return throughput;
     }
 
-    void storeOptimizerDecision(const Pair &pair, int activeDecision,
+    void storeOptimizerDecision(const QueueId &queue, int activeDecision,
         const PairState &newState, int diff, const std::string &rationale) {
 
-        setNewOptimizerValue(sql, pair, activeDecision, newState.ema);
-        updateOptimizerEvolution(sql, pair, activeDecision, diff, rationale, newState);
+        setNewOptimizerValue(sql, queue, activeDecision, newState.ema);
+        updateOptimizerEvolution(sql, queue, activeDecision, diff, rationale, newState);
     }
 
-    void storeOptimizerStreams(const Pair &pair, int streams) {
+    void storeOptimizerStreams(const QueueId &queue, int streams) {
         sql.begin();
 
         sql << "UPDATE t_optimizer "
                "SET nostreams = :nostreams, datetime = UTC_TIMESTAMP() "
                "WHERE source_se = :source AND dest_se = :dest",
-            soci::use(pair.source, "source"), soci::use(pair.destination, "dest"),
+            soci::use(queue.sourceSe, "source"), soci::use(queue.destSe, "dest"),
             soci::use(streams, "nostreams");
 
         sql.commit();
