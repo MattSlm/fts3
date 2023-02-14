@@ -57,17 +57,20 @@ static void updateOptimizerEvolution(soci::session &sql,
         sql.begin();
         sql << " INSERT INTO t_optimizer_evolution "
             " (datetime, source_se, dest_se, "
+            "  voName, activity, "
             "  ema, active, throughput, success, "
             "  filesize_avg, filesize_stddev, "
             "  actual_active, queue_size, "
             "  rationale, diff) "
             " VALUES "
             " (UTC_TIMESTAMP(), :source, :dest, "
+            "  :vo, :activity, "
             "  :ema, :active, :throughput, :success, "
             "  :filesize_avg, :filesize_stddev, "
             "  :actual_active, :queue_size, "
             "  :rationale, :diff)",
             soci::use(queue.sourceSe), soci::use(queue.destSe),
+            soci::use(queue.voName), soci::use(queue.activity), 
             soci::use(newState.ema), soci::use(active), soci::use(newState.throughput), soci::use(newState.successRate),
             soci::use(newState.filesizeAvg), soci::use(newState.filesizeStdDev),
             soci::use(newState.activeCount), soci::use(newState.queueSize),
@@ -92,8 +95,12 @@ static int getCountInState(soci::session &sql, const QueueId &queue, const std::
     int count = 0;
 
     sql << "SELECT count(*) FROM t_file "
-    "WHERE source_se = :source AND dest_se = :dest_se AND file_state = :state",
-    soci::use(queue.sourceSe), soci::use(queue.destSe), soci::use(state), soci::into(count);
+    "WHERE source_se = :source AND dest_se = :dest_se "
+    "AND vo_name = :voName AND activity = :activity "
+    "AND file_state = :state " 
+    soci::use(queue.sourceSe), soci::use(queue.destSe), 
+    soci::use(queue.voName), soci::use(queue.activity),
+    soci::use(state), soci::into(count);
 
     return count;
 }
@@ -115,16 +122,16 @@ public:
         std::list<QueueId> result;
 
         soci::rowset<soci::row> rs = (sql.prepare <<
-            "SELECT DISTINCT source_se, dest_se, vo_name "
+            "SELECT DISTINCT source_se, dest_se, vo_name, activity "
             "FROM t_file "
-            "WHERE file_state IN ('ACTIVE', 'SUBMITTED') "
-            "GROUP BY source_se, dest_se, vo_name, file_state "
+            "WHERE file_state IN ('ACTIVE', 'SUBMITTED',) "
+            "GROUP BY source_se, dest_se, vo_name, activity, file_state "
             "ORDER BY NULL"
         );
 
         for (auto i = rs.begin(); i != rs.end(); ++i) {
             result.push_back(QueueId(i->get<std::string>("source_se"), i->get<std::string>("dest_se"),
-                                  i->get<std::string>("vo_name")));
+                                  i->get<std::string>("vo_name")), i->get<std:string>("activity"), 0);
         }
 
         return result;
@@ -182,8 +189,10 @@ public:
         int currentActive = 0;
 
         sql << "SELECT active FROM t_optimizer "
-            "WHERE source_se = :source AND dest_se = :dest_se",
+            "WHERE source_se = :source AND dest_se = :dest_se "
+            "AND vo_name = :vo AND activity = :activity",
             soci::use(queue.sourceSe),soci::use(queue.destSe),
+            soci::use(queue.voName), soci::use(queue.activity), 
             soci::into(currentActive, isCurrentNull);
 
         if (isCurrentNull == soci::i_null) {
@@ -216,7 +225,6 @@ public:
 
         return pid;
     }
-    
     
     void getTcnPipeResource(const QueueId &queue, std::vector<std::string> &usedResources) {
         usedResources.clear();
