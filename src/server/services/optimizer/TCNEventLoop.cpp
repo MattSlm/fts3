@@ -171,7 +171,7 @@ double TCNEventLoop::calculateTputVariance() {
 		}
 
 		int numSamples = VarNumSamples * (measureInfos.size() > VarNumSamples) + 
-								(measureInfos.size() - 1) * (measureInfos.size() <= VarNumSamples) 
+								(measureInfos.size() - 1) * (measureInfos.size() <= VarNumSamples);
 
 		std::vector<ThroughputVector> tputs;
 		for(int i = measureInfos.size() - numSamples
