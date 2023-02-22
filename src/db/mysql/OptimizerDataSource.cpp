@@ -231,8 +231,127 @@ public:
         return; 
     }
 
+    void getOriginTransferredBytes(std::map<int64_t, double> &originInfo)
+    {
+        originInfo.clear();
+        FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: clear originInfo" << commit;
 
-    void getTransferredBytes(std::map<Pair, double> &measureMap, time_t windowStart)
+
+        soci::rowset<soci::row> active_transfers =
+            (sql.prepare
+                    << "SELECT file_id, transferred "
+                    " FROM t_file "
+                    " WHERE "
+                    " file_state = 'ACTIVE' ");
+
+        FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: sql query done" << commit;
+
+        for (auto j = transfers.begin(); j != transfers.end(); ++j) {
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: iterate over active transfer" << commit;
+            auto transferred = j->get<long long>("transferred", 0.0);
+            auto file_id = j->get<int64_t>("file_id", 0);
+
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes:read active transfer info" << commit;
+
+            auto idx = originInfo.find(file_id);
+            if (idx == originInfo.end()) 
+            {
+                // not found    
+                FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: insert new file_id to originInfo" << commit;
+                originInfo.insert(std::pair<int64_t, double>(file_id, (double)transferred));
+            }   
+        }
+        
+
+        return;
+
+    }
+
+    void getTransferredBytesWithOrigin(
+        std::map<int64_t, double> &originInfo, 
+        std::map<Pair, double> &measureMap,
+        time_t windowStart
+    )
+    {
+        measureMap.clear(); 
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: clear measureMap" << commit; 
+
+
+        static struct tm nulltm = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+        time_t now = time(NULL);
+        time_t total_seconds = now - windowStart;
+
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: executing sql query" << commit;
+
+        soci::rowset<soci::row> transfers =
+            (sql.prepare
+                    << "SELECT transferred, filesize, file_id, source_se, dest_se "
+                    " FROM t_file "
+                    " WHERE "
+                    " file_state = 'ACTIVE' "
+                    " UNION ALL "
+                    " SELECT transferred, filesize, file_id, source_se, dest_se "
+                    " FROM t_file USE INDEX(idx_finish_time)"
+                    " WHERE "
+                    " file_state IN ('FINISHED', 'ARCHIVING') AND "
+                    " finish_time >= (UTC_TIMESTAMP() - INTERVAL :interval "
+                    " SECOND)",
+                    soci::use(total_seconds, "interval"));
+        
+        FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: sql query done" << commit;
+
+        for (auto j = transfers.begin(); j != transfers.end(); ++j) {
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer" << commit;
+            auto transferred = j->get<long long>("transferred", 0.0);
+            auto filesize = j->get<long long>("filesize", 0.0);
+            auto file_id = j->get<int64_t>("file_id", 0);
+
+            auto source_se = j->get<std::string>("source_se"); 
+            auto dest_se = j->get<std::string>("dest_se");
+
+            long long bytesInWindow; 
+            // Not finish information
+            if (endtm.tm_year <= 0) {
+                bytesInWindow = transferred;
+            }
+            // Finished
+            else {
+                bytesInWindow = filesize;
+            }
+
+            // check if this while has been active before QoS interval began
+
+            auto origin_idx = originInfo.find(file_id);
+            if (origin_idx !=  originInfo.end())
+            {
+                FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finding file" << file_id << commit; 
+                bytesInWindow -= origin_idx->second; 
+            }
+
+            Pair currentpair(source_se, dest_se, "");
+
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finding pair" << currentpair << commit;
+            auto idx = measureMap.find(currentpair);
+            if (idx == measureMap.end()) 
+            {
+                // not found    
+                FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: insert new pair to measureMap" << commit;
+                measureMap.insert(std::pair<Pair, double>(currentpair, (double)bytesInWindow));
+            } 
+            else 
+            {
+                FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: update exising pair" << commit;
+                idx->second += (double)bytesInWindow;
+            }
+            
+        } 
+
+        return; 
+    }
+
+    void getTransferredBytes(std::map<Pair, double> &measureMap,
+                            time_t windowStart)
     {
         measureMap.clear(); 
 		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytes: clear measureMap" << commit;

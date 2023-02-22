@@ -148,6 +148,14 @@ public:
 
     virtual void getTransferredBytes(std::map<Pair, double> &measureMap, time_t windowStart) = 0;
 
+    virtual void getOriginTransferredBytes(std::map<int64_t, double> &originInfo) = 0;
+
+    virtual void getTransferredBytesWithOrigin(
+        std::map<int64_t, double> &originInfo, 
+        std::map<Pair, double> &measureMap,
+        time_t windowStart
+    ) = 0;
+
     virtual void getActiveConcurrencyVector(std::map<Pair, unsigned int> &ConcurrencyVector) = 0;
 
     virtual bool isBacklogged(const Pair &pair) = 0; 

@@ -160,6 +160,20 @@ public:
         return;
     }
 
+    void getTransferredBytesWithOrigin(
+        std::map<int64_t, double> &originInfo, 
+        std::map<Pair, double> &measureMap,
+        time_t windowStart
+    )
+    {
+        return;
+    }
+
+    void getOriginTransferredBytes(std::map<int64_t, double> &originInfo)
+    {
+        return;
+    }
+
     void getTcnResourceMap(std::map<std::string, std::vector<Pair>> &resourceMap) 
     {
         //TODO mock!

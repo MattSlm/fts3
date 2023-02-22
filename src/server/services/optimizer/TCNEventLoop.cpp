@@ -11,6 +11,8 @@
 
 #include "TCNEventLoop.h"
 
+#define VarNumSamples 5
+
 using namespace fts3::common;
 
 namespace fts3 {
@@ -114,16 +116,16 @@ ThroughputVector TCNEventLoop::calculateTput(int index) {
 	try {
 		ThroughputVector retval;
 		if(measureInfos.size() < 2 || index == 0) { return retval; }
-
-		TCNMeasureInfo firstMeasure = measureInfos.at(0);
+		
+		TCNMeasureInfo firstMeasure;
 
 		TCNMeasureInfo lastMeasure;
 		if(index == -1){
-			lastMeasure = measureInfos.back();
+			index = measureInfos.size() - 1;
 		}
-		else {
-			lastMeasure = measureInfos.at(index);
-		}
+
+		firstMeasure = measureInfos.at(index - 1);
+		lastMeasure = measureInfos.at(index);
 
 		for(auto it = lastMeasure.bytesSentVector.begin();
 			it != lastMeasure.bytesSentVector.end(); it++) {
@@ -167,8 +169,14 @@ double TCNEventLoop::calculateTputVariance() {
 			// if we want to have a nonzero variance
 			return -1;
 		}
+
+		int numSamples = VarNumSamples * (measureInfos.size() > VarNumSamples) + 
+								(measureInfos.size() - 1) * (measureInfos.size() <= VarNumSamples) 
+
 		std::vector<ThroughputVector> tputs;
-		for(int i = 1; i < measureInfos.size(); i++){
+		for(int i = measureInfos.size() - numSamples
+			; i < measureInfos.size(); 
+			i++){
 			tputs.push_back(calculateTput(i));
 		}
 		ThroughputVector means;
@@ -220,7 +228,7 @@ double TCNEventLoop::calculateTputVariance() {
 			if(it->second > maxVar) maxVar = it->second;
 		}
 		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Done calculating variance: "<< maxVar << commit;
-		return maxVar;
+		return std::sqrt(maxVar);
 	}
     catch (std::exception &e) {
 		std::string stackTrace = panic::stack_dump(panic::stack_backtrace, panic::stack_backtrace_size);
@@ -360,6 +368,8 @@ void TCNEventLoop::newQosInterval(std::time_t start) {
     try {
 		phase = TCNEventPhase::estTOld;
 		measureInfos.clear();
+		originInfo.clear();
+		dataSource->getOriginTransferredBytes(originInfo);
 		qosIntervalStartTime = start; 
 	}
     catch (std::exception &e) {
@@ -399,9 +409,9 @@ ConcurrencyVector TCNEventLoop::step(){
 		// get measurements
 		TCNMeasureInfo measureInfo;
 
-		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: before getTransferredBytes" << commit;
-		dataSource->getTransferredBytes(measureInfo.bytesSentVector, qosIntervalStartTime);
-		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: after getTransferredBytes" << commit;
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: before getTransferredBytesWithOrigin" << commit;
+		dataSource->getTransferredBytesWithOrigin(originInfo, measureInfo.bytesSentVector, qosIntervalStartTime);
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: after getTransferredBytesWithOrigin" << commit;
 		measureInfo.measureTime = std::time(NULL);
 		measureInfos.push_back(measureInfo);
 		double variance; 
