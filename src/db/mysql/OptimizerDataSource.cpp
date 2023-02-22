@@ -246,7 +246,7 @@ public:
 
         FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: sql query done" << commit;
 
-        for (auto j = transfers.begin(); j != transfers.end(); ++j) {
+        for (auto j = active_transfers.begin(); j != active_transfers.end(); ++j) {
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: iterate over active transfer" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
             auto file_id = j->get<int64_t>("file_id", 0);
