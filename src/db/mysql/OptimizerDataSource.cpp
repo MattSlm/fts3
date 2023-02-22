@@ -286,12 +286,12 @@ public:
 
         soci::rowset<soci::row> transfers =
             (sql.prepare
-                    << "SELECT transferred, filesize, file_id, source_se, dest_se "
+                    << "SELECT transferred, finish_time, filesize, file_id, source_se, dest_se "
                     " FROM t_file "
                     " WHERE "
                     " file_state = 'ACTIVE' "
                     " UNION ALL "
-                    " SELECT transferred, filesize, file_id, source_se, dest_se "
+                    " SELECT transferred, finish_time, filesize, file_id, source_se, dest_se "
                     " FROM t_file USE INDEX(idx_finish_time)"
                     " WHERE "
                     " file_state IN ('FINISHED', 'ARCHIVING') AND "
@@ -306,7 +306,7 @@ public:
             auto transferred = j->get<long long>("transferred", 0.0);
             auto filesize = j->get<long long>("filesize", 0.0);
             auto file_id = j->get<int64_t>("file_id", 0);
-
+            auto endtm = j->get<struct tm>("finish_time", nulltm);
             auto source_se = j->get<std::string>("source_se"); 
             auto dest_se = j->get<std::string>("dest_se");
 
