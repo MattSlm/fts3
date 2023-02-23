@@ -368,8 +368,11 @@ void TCNEventLoop::newQosInterval(std::time_t start) {
     try {
 		phase = TCNEventPhase::estTOld;
 		measureInfos.clear();
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "NewQoSInterval - before clearing the map" << commit;
 		originInfo.clear();
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "NewQoSInterval - after clearing the map" << commit;
 		dataSource->getOriginTransferredBytes(originInfo);
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "NewQoSInterval - after extracting the map" << commit;
 		qosIntervalStartTime = start; 
 	}
     catch (std::exception &e) {
