@@ -172,7 +172,7 @@ double TCNEventLoop::calculateTputVariance() {
 
 		int numSamples = VarNumSamples * (measureInfos.size() > VarNumSamples) + 
 								(measureInfos.size() - 1) * (measureInfos.size() <= VarNumSamples);
-
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "numSamples: " << numSamples << commit;
 		std::vector<ThroughputVector> tputs;
 		for(int i = measureInfos.size() - numSamples
 			; i < measureInfos.size(); 
@@ -182,6 +182,7 @@ double TCNEventLoop::calculateTputVariance() {
 		ThroughputVector means;
 		for(auto it = tputs.at(0).begin(); it != tputs.at(0).end(); it++) {
 			means[it->first] = it->second;
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput[0][" << it->first << "]: " << it->second << commit;
 		}
 		for(int i = 1; i < tputs.size(); i++){
 			ThroughputVector curTput = tputs.at(i);
@@ -193,12 +194,15 @@ double TCNEventLoop::calculateTputVariance() {
 					means[curPair] = it->second;
 				}
 				else {
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput[0][" << curPair << "]: " << it->second << commit;	
 					means[it->first] += it->second;
 				}
 			}
 		}
 		for(auto it = means.begin(); it != means.end(); it++){
 			means[it->first] /= (double)(tputs.size());
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << commit;
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Average tput on pipe: " << it->second << commit;	
 		}
 
 		ThroughputVector vars;
@@ -226,9 +230,12 @@ double TCNEventLoop::calculateTputVariance() {
 		double maxVar = -1;
 		for(auto it = vars.begin(); it != vars.end(); it++) {
 			if(it->second > maxVar) maxVar = it->second;
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << commit;
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput variance on pipe: " << it->second << commit;
 		}
-		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Done calculating variance: "<< maxVar << commit;
-		return std::sqrt(maxVar);
+		maxVar = std::sqrt(maxVar);
+		FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Done calculating variance: " << maxVar << commit;
+		return maxVar;
 	}
     catch (std::exception &e) {
 		std::string stackTrace = panic::stack_dump(panic::stack_backtrace, panic::stack_backtrace_size);
