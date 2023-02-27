@@ -204,7 +204,7 @@ double TCNEventLoop::calculateTputVariance() {
 		for(auto it = means.begin(); it != means.end(); it++){
 			means[it->first] /= (double)(tputs.size());
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first.source << ", " <<
-											it->frist.destination << commit;
+											it->first.destination << commit;
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Average tput on pipe: " << it->second << commit;	
 		}
 
@@ -234,7 +234,7 @@ double TCNEventLoop::calculateTputVariance() {
 		for(auto it = vars.begin(); it != vars.end(); it++) {
 			if(it->second > maxVar) maxVar = it->second;
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first.source << ", " <<
-											it->frist.destination << commit;
+											it->first.destination << commit;
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput variance on pipe: " << it->second << commit;
 		}
 		maxVar = std::sqrt(maxVar);
