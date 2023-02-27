@@ -143,6 +143,8 @@ void OptimizerService::runService()
             }
         }
         catch (std::exception &e) {
+            std::string stackTrace = panic::stack_dump(panic::stack_backtrace, panic::stack_backtrace_size);
+		    FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Stacktrace: " << stackTrace << commit;
             FTS3_COMMON_LOGGER_NEWLOG(ERR) << "Process thread OptimizerService " << e.what() <<
             fts3::common::commit;
         }
