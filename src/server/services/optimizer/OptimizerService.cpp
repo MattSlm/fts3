@@ -28,6 +28,9 @@
 
 #include "db/generic/SingleDbInstance.h"
 
+#include "common/Exceptions.h"
+#include "common/Logger.h"
+#include "common/panic.h"
 
 namespace fts3 {
 namespace server {
