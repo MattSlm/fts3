@@ -302,7 +302,7 @@ public:
         FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: sql query done" << commit;
 
         for (auto j = transfers.begin(); j != transfers.end(); ++j) {
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer" << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer began" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred data ok!" << commit;
             auto filesize = j->get<long long>("filesize", 0.0);
