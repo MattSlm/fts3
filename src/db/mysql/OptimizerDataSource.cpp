@@ -304,10 +304,15 @@ public:
         for (auto j = transfers.begin(); j != transfers.end(); ++j) {
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred data ok!" << commit;
             auto filesize = j->get<long long>("filesize", 0.0);
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: filesize ok!" << commit;
             auto file_id = j->get<long long>("file_id", 0.0);
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file_id ok!" << commit;
             auto endtm = j->get<struct tm>("finish_time", nulltm);
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: sinish_time ok!" << commit;
             auto source_se = j->get<std::string>("source_se"); 
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: source se ok!" << commit;
             auto dest_se = j->get<std::string>("dest_se");
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer finished" << commit;
 
