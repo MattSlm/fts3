@@ -148,10 +148,10 @@ public:
 
     virtual void getTransferredBytes(std::map<Pair, double> &measureMap, time_t windowStart) = 0;
 
-    virtual void getOriginTransferredBytes(std::map<int64_t, double> &originInfo) = 0;
+    virtual void getOriginTransferredBytes(std::map<long long, double> &originInfo) = 0;
 
     virtual void getTransferredBytesWithOrigin(
-        std::map<int64_t, double> &originInfo, 
+        std::map<long long, double> &originInfo, 
         std::map<Pair, double> &measureMap,
         time_t windowStart
     ) = 0;

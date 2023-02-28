@@ -231,7 +231,7 @@ public:
         return; 
     }
 
-    void getOriginTransferredBytes(std::map<int64_t, double> &originInfo)
+    void getOriginTransferredBytes(std::map<long long, double> &originInfo)
     {
         originInfo.clear();
         FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: clear originInfo" << commit;
@@ -249,7 +249,7 @@ public:
         for (auto j = active_transfers.begin(); j != active_transfers.end(); ++j) {
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: iterate over active transfer" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
-            auto file_id = j->get<int64_t>("file_id", 0);
+            auto file_id = j->get<long long>("file_id", 0.0);
 
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes:read active transfer info" << commit;
 
@@ -258,7 +258,7 @@ public:
             {
                 // not found    
                 FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getOriginTransferredBytes: insert new file_id to originInfo" << commit;
-                originInfo.insert(std::pair<int64_t, double>(file_id, (double)transferred));
+                originInfo.insert(std::pair<long long, double>(file_id, (double)transferred));
             }   
         }
         
@@ -268,7 +268,7 @@ public:
     }
 
     void getTransferredBytesWithOrigin(
-        std::map<int64_t, double> &originInfo, 
+        std::map<long long, double> &originInfo, 
         std::map<Pair, double> &measureMap,
         time_t windowStart
     )
@@ -305,10 +305,11 @@ public:
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
             auto filesize = j->get<long long>("filesize", 0.0);
-            auto file_id = j->get<int64_t>("file_id", 0);
+            auto file_id = j->get<long long>("file_id", 0.0);
             auto endtm = j->get<struct tm>("finish_time", nulltm);
             auto source_se = j->get<std::string>("source_se"); 
             auto dest_se = j->get<std::string>("dest_se");
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfer finished" << commit;
 
             long long bytesInWindow; 
             // Not finish information
@@ -319,6 +320,7 @@ public:
             else {
                 bytesInWindow = filesize;
             }
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: after exact calculations" << commit;
 
             // check if this while has been active before QoS interval began
 
