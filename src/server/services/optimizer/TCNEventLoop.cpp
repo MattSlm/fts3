@@ -137,7 +137,12 @@ ThroughputVector TCNEventLoop::calculateTput(int index) {
 				// but good to be safe anyway :)
 				std::time_t intervalLength = lastMeasure.measureTime - firstMeasure.measureTime;;
 				double firstTransferred = firstMeasure.bytesSentVector[curPair];
-				retval[curPair] = (lastTransferred - firstTransferred)/((double)intervalLength) ;
+				retval[curPair] = (lastTransferred - firstTransferred)/((double)intervalLength);
+
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Event loop Tput Calc - Pair: " << curPair  << 
+													" Interval length: " << intervalLength <<
+													" Last sent bytes: " << lastTransferred <<
+													" First sent bytes: " << firstTransferred <<commit;
 			}
 		}
 
@@ -195,7 +200,7 @@ double TCNEventLoop::calculateTputVariance() {
 					means[curPair] = it->second;
 				}
 				else {
-					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput[0][" << curPair.source << ", " << curPair.destination
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput[ "<< i << "][" << curPair.source << ", " << curPair.destination
 										 <<  "]: " << it->second << commit;	
 					means[it->first] += it->second;
 				}

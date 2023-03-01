@@ -156,6 +156,8 @@ bool Optimizer::optimizeConnectionsForPair(OptimizerMode optMode, const Pair &pa
     PairState current;
     current.timestamp = time(NULL);
     current.avgDuration = dataSource->getAverageDuration(pair, boost::posix_time::minutes(30));
+    FTS3_COMMON_LOGGER_NEWLOG(DEBUG)
+        << "Optimizer average duration for " << pair << ": " << current.avgDuration << commit;
 
     boost::posix_time::time_duration timeFrame = calculateTimeFrame(current.avgDuration);
 
