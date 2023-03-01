@@ -306,7 +306,7 @@ public:
             auto transferred = j->get<long long>("transferred", 0.0);
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred data ok!" << commit;
             auto filesize = j->get<long long>("filesize", 0.0);
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: filesize ok!" << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: filesize ok! - uint64_t" << commit;
             uint64_t file_id = j->get<unsigned long long>("file_id", 0.0);
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file_id ok!" << commit;
             auto endtm = j->get<struct tm>("finish_time", nulltm);
