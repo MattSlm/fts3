@@ -161,7 +161,7 @@ public:
     }
 
     void getTransferredBytesWithOrigin(
-        std::map<long long, double> &originInfo, 
+        std::map<uint64_t, double> &originInfo, 
         std::map<Pair, double> &measureMap,
         time_t windowStart
     )
@@ -169,7 +169,7 @@ public:
         return;
     }
 
-    void getOriginTransferredBytes(std::map<long long, double> &originInfo)
+    void getOriginTransferredBytes(std::map<uint64_t, double> &originInfo)
     {
         return;
     }

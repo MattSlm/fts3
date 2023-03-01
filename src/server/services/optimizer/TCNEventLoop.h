@@ -31,7 +31,7 @@ public:
 
 	std::vector<TCNMeasureInfo> measureInfos;
 
-	std::map<long long, double> originInfo;
+	std::map<uint64_t, double> originInfo;
 	//ThroughputVector T_new;
 	
 	std::time_t epochStartTime;
