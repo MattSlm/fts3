@@ -207,7 +207,7 @@ namespace fts3
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "N[" << it->first.source << ", " << it->first.destination << "]: " << it->second << commit;
 					if (it->second == 0)
 					{
-						T_means.insert(std::pair<Pair, double>(it->first, 0.0));6
+						T_means.insert(std::pair<Pair, double>(it->first, 0.0));
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pair " << it->first << " is stale without any ready or ongoing transfers" << commit;
 						numStalePairs += 1;
 					}
@@ -219,7 +219,6 @@ namespace fts3
 				}
 				if (measureInfos.size() < 3)
 				{
-					// need 3 measurements to calculate two throughputs, which are necessary
 					// if we want to have a nonzero variance
 					return -1;
 				}
@@ -456,6 +455,8 @@ namespace fts3
 				ThroughputVector tau = calculateTau(-1);
 				ThroughputVector T_target = constructTargetTput();
 				double grad = utilityFunction(tau, T_new, T_target, t_target, dt) - utilityFunction(tau, T_old, T_target, t_target, dt);
+				// add debugging logs to gradient calculations 
+
 				ConcurrencyVector my_n_target = n_new;
 				if (my_n_target.count(pertPair) == 0)
 				{
