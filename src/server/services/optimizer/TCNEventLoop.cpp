@@ -198,7 +198,7 @@ namespace fts3
 
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Calculating variance: " << commit;
 			try
-			{
+			{ 
 				if (measureInfos.size() < 3)
 				{
 					// need 3 measurements to calculate two throughputs, which are necessary
@@ -310,22 +310,23 @@ namespace fts3
 				{
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first.source << ", " << it->first.destination << commit;
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Tput variance on pipe: " << it->second << commit;
-					if nonZeroMeasures
-						[it->first] > 1
-						{
+					if (nonZeroMeasures[it->first] > 1)
+					{
 							FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Meaningful variance" << commit;
 							if (it->second > maxVar)
+							{
 								maxVar = it->second;
-						} else
-						{
-							FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Not enough non-zero samples!" << commit;
-						}
-				}
-				if maxVar
-					== -1
+							}
+					} 
+					else
 					{
-						maxVar = convergeVariance * convergeVariance;
+							FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Not enough non-zero samples!" << commit;
 					}
+				}
+				if (maxVar == -1)
+				{
+					maxVar = convergeVariance * convergeVariance;
+				}
 				maxVar = std::sqrt(maxVar);
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Done calculating variance: " << maxVar << commit;
 				return maxVar;
