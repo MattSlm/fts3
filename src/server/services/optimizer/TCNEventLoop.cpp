@@ -274,10 +274,10 @@ namespace fts3
 				ThroughputVector vars;
 				for (auto it = tputs.at(0).begin(); it != tputs.at(0).end(); it++)
 				{
-					if it->second != 0.0
-						{
+					if (it->second != 0.0)
+					{
 							vars[it->first] = std::pow(T_means[it->first] - it->second, 2);
-						}
+					}
 				}
 				for (int i = 1; i < tputs.size(); i++)
 				{
@@ -285,8 +285,7 @@ namespace fts3
 					for (auto it = curTput.begin(); it != curTput.end(); it++)
 					{
 						Pair curPair = it->first;
-						if it
-							->second != 0.0
+						if (it->second != 0.0)
 							{
 								if (vars.count(curPair) == 0)
 								{
