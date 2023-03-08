@@ -207,7 +207,7 @@ namespace fts3
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "N[" << it->first.source << ", " << it->first.destination << "]: " << it->second << commit;
 					if (it->second == 0)
 					{
-						T_means.insert(std::pair<Pair, double>(it->first, 0.0));
+						T_means.insert(std::pair<Pair, double>(it->first, 0.0));6
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pair " << it->first << " is stale without any ready or ongoing transfers" << commit;
 						numStalePairs += 1;
 					}
@@ -591,13 +591,20 @@ namespace fts3
 					{
 						// our concurrency vector is out of date.
 						// either a pipe has stopped being backlogged, or we are
-						// initializing.
+						// initializing or a new pipe became backlogged!
 						// either way, set our new n_old to be cur_n
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, diff" << commit;
-
 						// reset
 						measureInfos.clear();
 						epochStartTime = std::time(NULL);
+						for (it = cur_n.begin(); it != cur_n.end(); it++)
+						{
+							if (n_old.find(it->first) == n_old.end())
+							{
+								FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << " is now backlogged!" << commit;
+								cur_n[it->first] = 1; //start from one connection on the new backlogged pipe!
+							}
+						}
 						n_old = cur_n;
 						setOptimizerDecision(n_old);
 						break;
