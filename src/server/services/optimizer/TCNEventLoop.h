@@ -28,6 +28,7 @@ public:
 
 	ThroughputVector T_old;
 	ThroughputVector T_new;
+	ThroughputVector T_means;
 
 	std::vector<TCNMeasureInfo> measureInfos;
 
@@ -60,6 +61,7 @@ public:
 	Pair choosePertPair(ThroughputVector n);
 	ThroughputVector calculateTau(int index);
 	ThroughputVector calculateTput(int index);
+	 
 	double calculateTputVariance();
 	double efficiencyFunction(ThroughputVector tau);
 	double utilityFunction(
