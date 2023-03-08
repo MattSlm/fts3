@@ -597,7 +597,7 @@ namespace fts3
 						// reset
 						measureInfos.clear();
 						epochStartTime = std::time(NULL);
-						for (it = cur_n.begin(); it != cur_n.end(); it++)
+						for (auto it = cur_n.begin(); it != cur_n.end(); it++)
 						{
 							if (n_old.find(it->first) == n_old.end())
 							{
