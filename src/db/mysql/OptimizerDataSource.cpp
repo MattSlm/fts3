@@ -238,7 +238,7 @@ public:
             auto dest_se = j->get<std::string>("dest_se");
 
             Pair currentpair(source_se, dest_se, "");
-            if (ConcurrencyVector.find(Pair) == ConcurrencyVector.end())
+            if (ConcurrencyVector.find(currentpair) == ConcurrencyVector.end())
             {
                 ConcurrencyVector.insert(std::pair<Pair, unsigned int>(currentpair, 0));
             }

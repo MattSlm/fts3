@@ -194,11 +194,12 @@ namespace fts3
 
 		double TCNEventLoop::calculateTputVariance()
 		{
-			//exclude the pipes with 0 active connections from calculation 
+			//exclude the pipes with 0 active connections from calculation and set their means
 
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Calculating variance: " << commit;
 			try
 			{ 
+				//for (auto it = cur_n.begin 
 				if (measureInfos.size() < 3)
 				{
 					// need 3 measurements to calculate two throughputs, which are necessary
