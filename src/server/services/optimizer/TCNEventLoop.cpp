@@ -207,7 +207,9 @@ namespace fts3
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "N[" << it->first.source << ", " << it->first.destination << "]: " << it->second << commit;
 					if (it->second == 0)
 					{
-						T_means.insert(std::pair<Pair, double>(currentpair, 0.0));
+						T_means.insert(std::pair<Pair, double>(it->first, 0.0));
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pair " << it->first << " is stale without any ready or ongoing transfers" << commit;
+						numStalePairs += 1;
 					}
 				}
 				if (numStalePairs == cur_n.size())
