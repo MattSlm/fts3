@@ -221,7 +221,7 @@ public:
         soci::rowset<soci::row> noConnectionsStale =
             (sql.prepare << " SELECT DISTINCT f.source_se, f.dest_se  "
                             " FROM t_file f USE INDEX(idx_link_state_vo)    "
-                            " WHERE f.file_state = 'ACTIVE' OR f.file_state = 'READY' OR f.file_state = 'ACTIVE' OR f.file_state ='SUBMITTED' "
+                            " WHERE f.file_state ='SUBMITTED' "
             );
         for (auto j = noConnectionsActive.begin(); j != noConnectionsActive.end(); ++j)
         {

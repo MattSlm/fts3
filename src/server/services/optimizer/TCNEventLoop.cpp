@@ -25,6 +25,7 @@ namespace fts3
 								   std::time_t estTOldMinTime_,
 								   TCNEventPhase phase_) : dataSource(ds), convergeVariance(convergeVariance_), estTOldMinTime(estTOldMinTime_), phase(phase_), pertPair(Pair("", "", ""))
 		{
+			InitializedConcurrencyVectors = false;
 		}
 
 		void TCNEventLoop::setOptimizerDecision(ConcurrencyVector n)
@@ -199,7 +200,21 @@ namespace fts3
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Calculating variance: " << commit;
 			try
 			{ 
-				//for (auto it = cur_n.begin 
+				T_means.clear();
+				int numStalePairs = 0; 
+				for (auto it = cur_n.begin(); it != cur_n.end(); it++)
+				{
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "N[" << it->first.source << ", " << it->first.destination << "]: " << it->second << commit;
+					if (it->second == 0)
+					{
+						T_means.insert(std::pair<Pair, double>(currentpair, 0.0));
+					}
+				}
+				if (numStalePairs == cur_n.size())
+				{
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Concurrency vector is 0. Mean = 0, Variance = 0" << commit;
+					return 0;
+				}
 				if (measureInfos.size() < 3)
 				{
 					// need 3 measurements to calculate two throughputs, which are necessary
@@ -217,7 +232,7 @@ namespace fts3
 				{
 					tputs.push_back(calculateTput(i));
 				}
-				T_means.clear();
+				
 				int numPipes = tputs.at(0).size();
 				int numTputs = 0;
 				for (auto it = tputs.at(0).begin(); it != tputs.at(0).end(); it++)
@@ -540,7 +555,7 @@ namespace fts3
 
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: getActiveConcurrencyVector done" << commit;
 
-				if (cur_n.size() == 0)
+				if (InitializedConcurrencyVectors == false)
 				{
 					// if no active connections scheduled, then set every pipe to 1 connection
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: empty cur_n" << commit;
@@ -552,6 +567,7 @@ namespace fts3
 					{
 						cur_n[*it] = 1;
 					}
+					InitializedConcurrencyVectors = true;
 					return cur_n;
 				}
 

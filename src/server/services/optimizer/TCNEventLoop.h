@@ -14,6 +14,8 @@ struct TCNMeasureInfo {
 
 class TCNEventLoop {
 public:
+
+	bool InitializedConcurrencyVectors; 
 	TCNEventPhase phase;
 
 	ConcurrencyVector prev_n;
