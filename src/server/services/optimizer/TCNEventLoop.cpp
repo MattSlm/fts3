@@ -286,7 +286,7 @@ namespace fts3
 					// not enough samples to calculate the Tput for all active pipes!
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Number of pipes with non-zero Tputs: " << numTputs << commit;
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Number of active pipes: " << numPipes << commit;
-					return convergeVariance * convergeVariance;
+					return convergeVariance;
 				}
 			
 				ThroughputVector vars;
