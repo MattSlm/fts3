@@ -589,7 +589,7 @@ namespace fts3
 				{
 				case TCNEventPhase::estTOld:
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: phase estTOld" << commit;
-					if (cur_n != n_old)
+					if (cur_n.size() != n_old.size())
 					{
 						// our concurrency vector is out of date.
 						// either a pipe has stopped being backlogged, or we are
@@ -648,7 +648,7 @@ namespace fts3
 					break;
 				case TCNEventPhase::estTNew:
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: phase estTNew" << commit;
-					if (cur_n != n_new)
+					if (cur_n.size() != n_new.size())
 					{
 						// our concurrency vector is out of date.
 						// either a pipe has stopped being backlogged, or we are
@@ -686,6 +686,23 @@ namespace fts3
 					break;
 				case TCNEventPhase::adjust:
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: phase adjust" << commit;
+					if (cur_n.size() != n_target.size())
+					{
+						// our concurrency vector is out of date.
+						// either a pipe has stopped being backlogged, or we are
+						// initializing.
+						// either way, set our new n_old to be cur_n
+
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, pipe set diff" << commit;
+						// reset
+						measureInfos.clear();
+						epochStartTime = std::time(NULL);
+						n_old = cur_n;
+						setOptimizerDecision(n_old);
+						phase = TCNEventPhase::estTOld;
+						break;
+					}
+
 					if (prev_n != cur_n)
 					{
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, diff" << commit;
