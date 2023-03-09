@@ -220,7 +220,8 @@ namespace fts3
 				if (measureInfos.size() < 3)
 				{
 					// if we want to have a nonzero variance
-					return -1;
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Not enough samples has been gathered yet." << commit;
+					return 0;
 				}
 
 				int numSamples = VarNumSamples * (measureInfos.size() > VarNumSamples) +
@@ -600,10 +601,17 @@ namespace fts3
 						epochStartTime = std::time(NULL);
 						for (auto it = cur_n.begin(); it != cur_n.end(); it++)
 						{
+							FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << 
+																" Current concurrency: " << it->second << commit;
 							if (n_old.find(it->first) == n_old.end())
 							{
 								FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << " is now backlogged!" << commit;
 								cur_n[it->first] = 1; //start from one connection on the new backlogged pipe!
+							} 
+							else 
+							{
+								FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Pipe: " << it->first << 
+																" Configgured concurrency: " << n_old[it->first] << commit;
 							}
 						}
 						n_old = cur_n;
@@ -613,7 +621,8 @@ namespace fts3
 
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, before calculateTputVariance" << commit;
 					variance = calculateTputVariance();
-					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance" << commit;
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance - varaince: " 
+																<< variance << commit;
 					if (variance > 0 && variance < convergeVariance &&
 						std::time(NULL) - epochStartTime > estTOldMinTime)
 					{
@@ -656,7 +665,10 @@ namespace fts3
 						break;
 					}
 
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, before calculateTputVariance" << commit;
 					variance = calculateTputVariance();
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance - varaince: " 
+																<< variance << commit;
 					if (variance < convergeVariance)
 					{
 						// we have converged
