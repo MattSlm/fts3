@@ -100,6 +100,7 @@ namespace fts3
 						;
 						double firstTransferred = firstMeasure.bytesSentVector[curPair];
 						retval[curPair] = lastTransferred - firstTransferred;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "tau[" << curPair << "] = " << retval[curPair] << commit;
 					}
 				}
 
@@ -215,13 +216,13 @@ namespace fts3
 				if (numStalePairs == cur_n.size())
 				{
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Concurrency vector is 0. Mean = 0, Variance = 0" << commit;
-					return 0;
+					return -1;
 				}
 				if (measureInfos.size() < 3)
 				{
 					// if we want to have a nonzero variance
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Not enough samples has been gathered yet." << commit;
-					return 0;
+					return -1;
 				}
 
 				int numSamples = VarNumSamples * (measureInfos.size() > VarNumSamples) +
@@ -440,8 +441,8 @@ namespace fts3
 			double t_target,
 			double dt)
 		{
-
-			return efficiencyFunction(tau) - normSquaredTputVec(
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "effeciency utility: " << efficiencyFunction(tau + mulTputVec(T, dt)) << commit;
+			return efficiencyFunction(tau + mulTputVec(T, dt)) - normSquaredTputVec(
 												 reluTputVec(subTputVecs(
 													 mulTputVec(t_target, T_target),
 													 addTputVecs(tau, mulTputVec(dt, T)))));
@@ -452,6 +453,10 @@ namespace fts3
 			try
 			{
 				double t_target = ((double)estTOldMinTime) + (std::time(NULL) - qosIntervalStartTime);
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "QoS interval Start Time: " << qosIntervalStartTime << commit;
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time in QoS interval: " << (std::time(NULL) - qosIntervalStartTime) << commit;
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Estimation min: " << (double)estTOldMinTime) << commit;
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "t_target: " << t_target << commit;
 				double dt = (double)estTOldMinTime;
 				ThroughputVector tau = calculateTau(-1);
 				ThroughputVector T_target = constructTargetTput();
@@ -623,7 +628,7 @@ namespace fts3
 					variance = calculateTputVariance();
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance - varaince: " 
 																<< variance << commit;
-					if (variance > 0 && variance < convergeVariance &&
+					if (variance >= 0 && variance < convergeVariance &&
 						std::time(NULL) - epochStartTime > estTOldMinTime)
 					{
 
@@ -669,7 +674,7 @@ namespace fts3
 					variance = calculateTputVariance();
 					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance - varaince: " 
 																<< variance << commit;
-					if (variance < convergeVariance)
+					if (variance < convergeVariance && variance >= 0 && n_new == cur_n)
 					{
 						// we have converged
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, converged" << commit;
@@ -736,13 +741,13 @@ namespace fts3
 						// update n_target
 						// some other pipe might not be backlogged, but we'll just hope
 						// that this doesn't affect things too much
-						for (auto it = cur_n.begin(); it != cur_n.end(); it++)
-						{
-							if (!(it->first == pertPair))
-							{
-								n_target[it->first] = it->second;
-							}
-						}
+						// for (auto it = cur_n.begin(); it != cur_n.end(); it++)
+						// {
+						// 	if (!(it->first == pertPair))
+						// 	{
+						// 		n_target[it->first] = it->second;
+						// 	}
+						// }
 						setOptimizerDecision(n_target);
 					}
 
