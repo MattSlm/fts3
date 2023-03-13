@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
-
 #include "Optimizer.h"
 #include "common/Exceptions.h"
 #include "common/Logger.h"
@@ -441,9 +440,8 @@ namespace fts3
 			double t_target,
 			double dt)
 		{
-			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "effeciency utility: " << addTputVecs(tau, mulTputVec(dt, T)) << commit;
-			return efficiencyFunction(addTputVecs(tau, mulTputVec(dt, T))) - normSquaredTputVec(
-												 reluTputVec(subTputVecs(
+			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "effeciency utility: " << efficiencyFunction(addTputVecs(tau, mulTputVec(dt, T))) << commit;
+			return efficiencyFunction(addTputVecs(tau, mulTputVec(dt, T))) - normSquaredTputVec(reluTputVec(subTputVecs(
 													 mulTputVec(t_target, T_target),
 													 addTputVecs(tau, mulTputVec(dt, T)))));
 		}
@@ -454,7 +452,7 @@ namespace fts3
 			{
 				double t_target = ((double)estTOldMinTime) + (std::time(NULL) - qosIntervalStartTime);
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "QoS interval Start Time: " << qosIntervalStartTime << commit;
-				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time in QoS interval: " << (std::time(NULL) - qosIntervalStartTime) << commit;
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time in QoS interval: " << double(std::time(NULL) - qosIntervalStartTime) << commit;
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Estimation min: " << (double)estTOldMinTime << commit;
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "t_target: " << t_target << commit;
 				double dt = (double)estTOldMinTime;
