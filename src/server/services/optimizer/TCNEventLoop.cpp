@@ -717,22 +717,22 @@ namespace fts3
 							cur_pert_n = cur_n[pertPair];
 						}
 
-						if (prev_pert_n > cur_pert_n)
-						{
-							// pert pipe is decreasing
-							FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, decreasing" << commit;
-							// if we are already below our target, then this is bad!
-							if (cur_pert_n < n_target[pertPair])
-							{
-								// cut our losses, reset to estTOld
-								epochStartTime = std::time(NULL);
-								measureInfos.clear();
-								n_old = cur_n;
-								setOptimizerDecision(n_old);
-								phase = TCNEventPhase::estTOld;
-								break;
-							}
-						}
+						// if (prev_pert_n > cur_pert_n)
+						// {
+						// 	// pert pipe is decreasing
+						// 	FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, decreasing" << commit;
+						// 	// if we are already below our target, then this is bad!
+						// 	if (cur_pert_n < n_target[pertPair])
+						// 	{
+						// 		// cut our losses, reset to estTOld
+						// 		epochStartTime = std::time(NULL);
+						// 		measureInfos.clear();
+						// 		n_old = cur_n;
+						// 		setOptimizerDecision(n_old);
+						// 		phase = TCNEventPhase::estTOld;
+						// 		break;
+						// 	}
+						// }
 						// update n_target
 						// some other pipe might not be backlogged, but we'll just hope
 						// that this doesn't affect things too much
