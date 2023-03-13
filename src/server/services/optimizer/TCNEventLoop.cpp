@@ -442,7 +442,7 @@ namespace fts3
 			double dt)
 		{
 			FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "effeciency utility: " << efficiencyFunction(tau + mulTputVec(dt, T)) << commit;
-			return efficiencyFunction(tau + mulTputVec(T, dt)) - normSquaredTputVec(
+			return efficiencyFunction(tau + mulTputVec(dt, T)) - normSquaredTputVec(
 												 reluTputVec(subTputVecs(
 													 mulTputVec(t_target, T_target),
 													 addTputVecs(tau, mulTputVec(dt, T)))));
