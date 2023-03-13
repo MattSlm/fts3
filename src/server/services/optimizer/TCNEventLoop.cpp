@@ -455,7 +455,7 @@ namespace fts3
 				double t_target = ((double)estTOldMinTime) + (std::time(NULL) - qosIntervalStartTime);
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "QoS interval Start Time: " << qosIntervalStartTime << commit;
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time in QoS interval: " << (std::time(NULL) - qosIntervalStartTime) << commit;
-				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Estimation min: " << (double)estTOldMinTime) << commit;
+				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Estimation min: " << (double)estTOldMinTime << commit;
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "t_target: " << t_target << commit;
 				double dt = (double)estTOldMinTime;
 				ThroughputVector tau = calculateTau(-1);
