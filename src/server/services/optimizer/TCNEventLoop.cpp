@@ -167,7 +167,9 @@ namespace fts3
 						double firstTransferred = firstMeasure.bytesSentVector[curPair];
 						retval[curPair] = (lastTransferred - firstTransferred) / ((double)intervalLength);
 
-						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Event loop Tput Calc - Pair: " << curPair << " Interval length: " << intervalLength << " Last sent bytes: " << lastTransferred << " First sent bytes: " << firstTransferred << commit;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Event loop Tput Calc - Pair: " << curPair << " Interval length: " << intervalLength << commit;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Start time: " << firstMeasure.measureTime << " End time: " << lastMeasure.measureTime;  
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Last sent bytes: " << lastTransferred << " First sent bytes: " << firstTransferred << commit;
 					}
 				}
 
@@ -229,10 +231,21 @@ namespace fts3
 				FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "numSamples: " << numSamples << commit;
 				std::vector<ThroughputVector> tputs;
 				std::map<Pair, int> nonZeroMeasures;
-				for (int i = measureInfos.size() - numSamples; i < measureInfos.size();
-					 i++)
+				int numFreshSamples = 0; 
+				for (int i = measureInfos.size() - 1; i >= 1; i--)
 				{
+					if (measureInfos.at(i).measureTime <= epochStartTime) 
+					{
+						break; 
+					}
 					tputs.push_back(calculateTput(i));
+					numFreshSamples ++; 
+				}
+
+				if (numFreshSamples < 3)
+				{
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Not enough samples have been gathered after switching to the new pohase: " << numFreshSamples << commit;	
+					return -1;
 				}
 				
 				int numPipes = tputs.at(0).size();
@@ -600,7 +613,7 @@ namespace fts3
 						// either way, set our new n_old to be cur_n
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, diff" << commit;
 						// reset
-						measureInfos.clear();
+						//measureInfos.clear();
 						epochStartTime = std::time(NULL);
 						for (auto it = cur_n.begin(); it != cur_n.end(); it++)
 						{
@@ -636,7 +649,7 @@ namespace fts3
 						T_old = T_means;
 
 						// perturb a new pipe
-						measureInfos.clear();
+						//measureInfos.clear();
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, perturb a new pipe" << commit;
 						do
 						{
@@ -660,7 +673,7 @@ namespace fts3
 
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, diff" << commit;
 						// reset
-						measureInfos.clear();
+						// measureInfos.clear();
 						epochStartTime = std::time(NULL);
 						n_old = cur_n;
 						setOptimizerDecision(n_old);
@@ -678,7 +691,7 @@ namespace fts3
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, converged" << commit;
 						T_new = T_means;
 						// calculate gradient
-						measureInfos.clear();
+						// measureInfos.clear();
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, before gradStep" << commit;
 						n_target = gradStep();
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, after gradStep" << commit;
@@ -698,7 +711,7 @@ namespace fts3
 
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, pipe set diff" << commit;
 						// reset
-						measureInfos.clear();
+						// measureInfos.clear();
 						epochStartTime = std::time(NULL);
 						n_old = cur_n;
 						setOptimizerDecision(n_old);
@@ -753,7 +766,7 @@ namespace fts3
 					{
 						// we've reached our target
 						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: adjust, reach target" << commit;
-						measureInfos.clear();
+						//measureInfos.clear();
 						n_old = n_target;
 						setOptimizerDecision(n_old);
 						epochStartTime = std::time(NULL);
