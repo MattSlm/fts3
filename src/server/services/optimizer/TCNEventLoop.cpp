@@ -678,6 +678,7 @@ namespace fts3
 						n_old = cur_n;
 						setOptimizerDecision(n_old);
 						phase = TCNEventPhase::estTOld;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Next phase, estTOld" << commit;
 						break;
 					}
 
@@ -716,6 +717,7 @@ namespace fts3
 						n_old = cur_n;
 						setOptimizerDecision(n_old);
 						phase = TCNEventPhase::estTOld;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Next phase, estTOld" << commit;
 						break;
 					}
 
@@ -771,6 +773,7 @@ namespace fts3
 						setOptimizerDecision(n_old);
 						epochStartTime = std::time(NULL);
 						phase = TCNEventPhase::estTOld;
+						FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Next phase, estTOld" << commit;
 					}
 					break;
 				}
