@@ -25,7 +25,7 @@ namespace fts3
 								   TCNEventPhase phase_) : dataSource(ds), convergeVariance(convergeVariance_), estTOldMinTime(estTOldMinTime_), phase(phase_), pertPair(Pair("", "", ""))
 		{
 			InitializedConcurrencyVectors = false;
-			newQosInterval(std::time(null));
+			newQosInterval(std::time(NULL));
 		}
 
 		void TCNEventLoop::setOptimizerDecision(ConcurrencyVector n)
