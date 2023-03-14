@@ -25,6 +25,7 @@ namespace fts3
 								   TCNEventPhase phase_) : dataSource(ds), convergeVariance(convergeVariance_), estTOldMinTime(estTOldMinTime_), phase(phase_), pertPair(Pair("", "", ""))
 		{
 			InitializedConcurrencyVectors = false;
+			newQosInterval(std::time(null));
 		}
 
 		void TCNEventLoop::setOptimizerDecision(ConcurrencyVector n)
@@ -682,9 +683,9 @@ namespace fts3
 						break;
 					}
 
-					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, before calculateTputVariance" << commit;
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, before calculateTputVariance" << commit;
 					variance = calculateTputVariance();
-					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTOld, after calculateTputVariance - varaince: " 
+					FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Time multiplexing: estTNew, after calculateTputVariance - varaince: " 
 																<< variance << commit;
 					if (variance < convergeVariance && variance >= 0 && n_new == cur_n)
 					{

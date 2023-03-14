@@ -315,20 +315,24 @@ public:
 
         for (auto j = transfers.begin(); j != transfers.end(); ++j)
         {
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfers began" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfers began" << commit;
             auto transferred = j->get<long long>("transferred", 0.0);
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred data ok!" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred data ok!" << commit;
             auto filesize = j->get<long long>("filesize", 0.0);
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: filesize ok! - uint64_tg" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: filesize ok! - uint64_tg" << commit;
             uint64_t file_id = j->get<unsigned long long>("file_id", 0.0);
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file_id ok!" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file_id ok!" << commit;
             auto endtm = j->get<struct tm>("finish_time", nulltm);
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: sinish_time ok!" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finish_time ok!" << commit;
             auto source_se = j->get<std::string>("source_se");
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: source se ok!" << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: source se ok!" << commit;
             auto dest_se = j->get<std::string>("dest_se");
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfers finished" << commit;
-
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: iterate active transfers finished" << commit;
+            
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Window start time: " << windowStart << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file id: " << file_id << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred: " << transferred << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finish time: " << endtm << commit;
             long long bytesInWindow;
             // Not finish information
             if (endtm.tm_year <= 0)
@@ -340,20 +344,22 @@ public:
             {
                 bytesInWindow = filesize;
             }
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: after exact calculations" << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: total transferred: " << bytesInWindow << commit;
+            // FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: after exact calculations" << commit;
 
             // check if this while has been active before QoS interval began
 
             auto origin_idx = originInfo.find(file_id);
             if (origin_idx != originInfo.end())
             {
-                FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finding file" << file_id << commit;
+                //FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finding file" << file_id << commit;
                 bytesInWindow -= origin_idx->second;
             }
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred in window: " << bytesInWindow << commit;
 
             Pair currentpair(source_se, dest_se, "");
 
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finding pair" << currentpair << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: pair: 6" << currentPair << commit;
             auto idx = measureMap.find(currentpair);
             if (idx == measureMap.end())
             {
