@@ -332,7 +332,7 @@ public:
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "Window start time: " << windowStart << commit;
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: file id: " << file_id << commit;
             FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: transferred: " << transferred << commit;
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finish time: " << endtm << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: finish time: " << std::asctime(&endtm) << commit;
             long long bytesInWindow;
             // Not finish information
             if (endtm.tm_year <= 0)
