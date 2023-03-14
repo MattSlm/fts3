@@ -359,7 +359,7 @@ public:
 
             Pair currentpair(source_se, dest_se, "");
 
-            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: pair: 6" << currentPair << commit;
+            FTS3_COMMON_LOGGER_NEWLOG(DEBUG) << "getTransferredBytesWithOrigin: pair: 6" << currentpair << commit;
             auto idx = measureMap.find(currentpair);
             if (idx == measureMap.end())
             {
